@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register for AI Workshop/n by Aashish Sachdev</title>
+    <title>Register for AI Workshop</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css">
     <style>
@@ -66,9 +66,15 @@
         const phoneInput = window.intlTelInput(phoneInputField, {
             initialCountry: "auto",
             geoIpLookup: function(callback) {
-                fetch("https://ipinfo.io/json?token=YOUR_IPINFO_TOKEN")
-                    .then((res) => res.json())
-                    .then((data) => callback(data.country))
+                fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with your actual token
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data && data.country) {
+                            callback(data.country);
+                        } else {
+                            callback("us"); // Default to US if location detection fails
+                        }
+                    })
                     .catch(() => callback("us"));
             },
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
