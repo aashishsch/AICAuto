@@ -49,7 +49,7 @@
             <input type="text" id="name" placeholder="Full Name" required>
             <input type="tel" id="mobile" placeholder="Mobile Number" required>
             <input type="email" id="email" placeholder="Email" required>
-            <select id="source">
+            <select id="source" required>
                 <option value="">How did you hear about us?</option>
                 <option value="Social Media">Social Media</option>
                 <option value="Friend">Friend</option>
@@ -57,58 +57,70 @@
             </select>
             <button type="submit">Submit</button>
         </form>
-        <p id="message"></p>
+        <p id="message" style="color:red;"></p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script>
+        // Initialize intl-tel-input for mobile number input with country auto-detection
         const phoneInputField = document.getElementById("mobile");
         const phoneInput = window.intlTelInput(phoneInputField, {
             initialCountry: "auto",
             geoIpLookup: function(callback) {
-                fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with your actual token
-                    .then((response) => response.json())
-                    .then((data) => {
-                        if (data && data.country) {
-                            callback(data.country);
-                        } else {
-                            callback("us"); // Default to US if location detection fails
-                        }
-                    })
+                fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with your IPInfo token
+                    .then(response => response.json())
+                    .then(data => callback(data.country))
                     .catch(() => callback("us"));
             },
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
         });
 
+        // Form submission event
         document.getElementById("registrationForm").addEventListener("submit", function(event) {
             event.preventDefault();
+            
             let name = document.getElementById("name").value.trim();
             let mobile = phoneInput.getNumber();
             let email = document.getElementById("email").value.trim();
             let source = document.getElementById("source").value;
+            let messageBox = document.getElementById("message");
 
+            // Email validation (no "+" and proper format)
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(email) || email.includes("+") || /[^a-zA-Z0-9.@_-]/.test(email)) {
-                document.getElementById("message").innerText = "Invalid email format!";
+                messageBox.innerText = "Invalid email format!";
                 return;
             }
 
             if (!name || !mobile || !email || !source) {
-                document.getElementById("message").innerText = "Please fill all fields!";
+                messageBox.innerText = "Please fill all fields!";
                 return;
             }
 
-            fetch('https://script.google.com/macros/s/AKfycbz90VeNqAc5eyJYU5zgwoM3gtLTiglh8cwDrbbXZBSuTHjPdBmBH7FU0sapV73y_Kk/exec', {
+            // Prepare form data for submission
+            let formData = new FormData();
+            formData.append("action", "register");
+            formData.append("name", name);
+            formData.append("mobile", mobile);
+            formData.append("email", email);
+            formData.append("source", source);
+
+            // Send data to Google Apps Script
+            fetch('https://script.google.com/macros/s/AKfycbz90VeNqAc5eyJYU5zgwoM3gtLTiglh8cwDrbbXZBSuTHjPdBmBH7FU0sapV73y_Kk/exec', { // Replace with your actual Google Apps Script URL
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ name, mobile, email, source })
+                body: formData
             })
             .then(response => response.text())
             .then(data => {
-                window.location.href = 'payment.html?email=' + encodeURIComponent(email);
+                if (data.trim() === "Success") {
+                    window.location.href = 'payment.html?email=' + encodeURIComponent(email);
+                } else {
+                    messageBox.innerText = "Error! Please try again.";
+                }
             })
             .catch(error => {
-                document.getElementById("message").innerText = "Error! Try again.";
+                console.error("Error:", error);
+                messageBox.innerText = "Submission failed! Check your network.";
             });
         });
     </script>
