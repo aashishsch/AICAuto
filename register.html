@@ -105,7 +105,7 @@
             })
             .then(response => response.text())
             .then(data => {
-                document.getElementById("message").innerText = "Registration successful! Check your email.";
+                window.location.href = 'payment.html?email=' + encodeURIComponent(email);
             })
             .catch(error => {
                 document.getElementById("message").innerText = "Error! Try again.";
