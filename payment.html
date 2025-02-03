@@ -20,7 +20,7 @@
             margin: auto;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        input, button {
+        input {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -28,7 +28,7 @@
             border-radius: 5px;
         }
         button {
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             border: none;
             padding: 15px 20px;
@@ -37,66 +37,68 @@
             border-radius: 5px;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
         img {
             width: 200px;
-            margin: 20px 0;
+            margin: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Complete Your Payment</h2>
-        <p>Scan the QR code below to pay:</p>
-        <img src="qr-code.png" alt="Payment QR Code">
+        <p>Scan the QR Code below to make the payment:</p>
+        <img src="qr_code.png" alt="QR Code"> <!-- Replace with actual QR code image -->
+
         <form id="paymentForm">
-            <input type="email" id="email" readonly>
-            <input type="text" id="upiId" placeholder="Enter UPI ID used for payment" required>
-            <input type="text" id="transactionId" placeholder="Enter UPI Transaction ID" required>
-            <input type="file" id="paymentProof" accept="image/png, image/jpeg, image/jpg" required>
-            <button type="submit">Submit Payment Details</button>
+            <input type="text" id="upi_id" placeholder="Enter UPI ID Used for Payment" required>
+            <input type="text" id="transaction_id" placeholder="Enter UPI Transaction ID" required>
+            <input type="file" id="screenshot" accept="image/png, image/jpeg, image/jpg" required>
+            <button type="submit">Submit Payment</button>
         </form>
-        <p id="message"></p>
+
+        <p id="message" style="color:red;"></p>
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const email = urlParams.get('email');
-            if (email) {
-                document.getElementById("email").value = email;
-            }
-        });
-
         document.getElementById("paymentForm").addEventListener("submit", function(event) {
             event.preventDefault();
-            let email = document.getElementById("email").value;
-            let upiId = document.getElementById("upiId").value.trim();
-            let transactionId = document.getElementById("transactionId").value.trim();
-            let paymentProof = document.getElementById("paymentProof").files[0];
+            
+            let urlParams = new URLSearchParams(window.location.search);
+            let email = urlParams.get("email");
+            let upiId = document.getElementById("upi_id").value.trim();
+            let transactionId = document.getElementById("transaction_id").value.trim();
+            let screenshot = document.getElementById("screenshot").files[0];
+            let messageBox = document.getElementById("message");
 
-            if (!upiId || !transactionId || !paymentProof) {
-                document.getElementById("message").innerText = "Please fill all fields and upload payment proof.";
+            if (!email || !upiId || !transactionId || !screenshot) {
+                messageBox.innerText = "All fields are required!";
                 return;
             }
 
             let formData = new FormData();
+            formData.append("action", "payment");
             formData.append("email", email);
-            formData.append("upiId", upiId);
-            formData.append("transactionId", transactionId);
-            formData.append("paymentProof", paymentProof);
+            formData.append("upi_id", upiId);
+            formData.append("transaction_id", transactionId);
+            formData.append("screenshot", screenshot);
 
-            fetch('https://script.google.com/macros/s/AKfycbz90VeNqAc5eyJYU5zgwoM3gtLTiglh8cwDrbbXZBSuTHjPdBmBH7FU0sapV73y_Kk/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbz90VeNqAc5eyJYU5zgwoM3gtLTiglh8cwDrbbXZBSuTHjPdBmBH7FU0sapV73y_Kk/exec', { // Replace with Google Apps Script URL
                 method: 'POST',
                 body: formData
             })
             .then(response => response.text())
             .then(data => {
-                document.getElementById("message").innerText = "Payment details submitted successfully. Check your email for confirmation.";
+                if (data.trim() === "Success") {
+                    window.location.href = 'confirmation.html'; // Redirect after success
+                } else {
+                    messageBox.innerText = "Error! Try again.";
+                }
             })
             .catch(error => {
-                document.getElementById("message").innerText = "Error submitting payment details. Try again.";
+                console.error("Error:", error);
+                messageBox.innerText = "Submission failed! Check your network.";
             });
         });
     </script>
