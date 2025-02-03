@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment for AI Workshop</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 50%;
+            margin: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        img {
+            width: 200px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Complete Your Payment</h2>
+        <p>Scan the QR code below to pay:</p>
+        <img src="qr-code.png" alt="Payment QR Code">
+        <form id="paymentForm">
+            <input type="email" id="email" readonly>
+            <input type="text" id="upiId" placeholder="Enter UPI ID used for payment" required>
+            <input type="text" id="transactionId" placeholder="Enter UPI Transaction ID" required>
+            <input type="file" id="paymentProof" accept="image/png, image/jpeg, image/jpg" required>
+            <button type="submit">Submit Payment Details</button>
+        </form>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+            if (email) {
+                document.getElementById("email").value = email;
+            }
+        });
+
+        document.getElementById("paymentForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let email = document.getElementById("email").value;
+            let upiId = document.getElementById("upiId").value.trim();
+            let transactionId = document.getElementById("transactionId").value.trim();
+            let paymentProof = document.getElementById("paymentProof").files[0];
+
+            if (!upiId || !transactionId || !paymentProof) {
+                document.getElementById("message").innerText = "Please fill all fields and upload payment proof.";
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("email", email);
+            formData.append("upiId", upiId);
+            formData.append("transactionId", transactionId);
+            formData.append("paymentProof", paymentProof);
+
+            fetch('https://script.google.com/macros/s/AKfycbypW4tQxCXXu80C_Hwyp4Ztkbi8qYITC0AJ1PAEfE7a47YyGfqeB7lN7oQxzv_6iG8/exec', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("message").innerText = "Payment details submitted successfully. Check your email for confirmation.";
+            })
+            .catch(error => {
+                document.getElementById("message").innerText = "Error submitting payment details. Try again.";
+            });
+        });
+    </script>
+</body>
+</html>
