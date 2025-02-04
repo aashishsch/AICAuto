@@ -6,6 +6,48 @@
     <title>Register for AI Workshop</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 50%;
+            margin: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            display: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -23,6 +65,7 @@
             <button type="submit">Submit</button>
         </form>
         <p id="message"></p>
+        <p class="loading" id="loadingMessage">Processing... Please wait.</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
@@ -31,9 +74,15 @@
         const phoneInput = window.intlTelInput(phoneInputField, {
             initialCountry: "auto",
             geoIpLookup: function(callback) {
-                fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with your actual token
+                fetch("https://ipinfo.io/json?token=00585f354cc926") 
                     .then((response) => response.json())
-                    .then((data) => callback(data.country))
+                    .then((data) => {
+                        if (data && data.country) {
+                            callback(data.country);
+                        } else {
+                            callback("us");
+                        }
+                    })
                     .catch(() => callback("us"));
             },
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
@@ -41,25 +90,26 @@
 
         document.getElementById("registrationForm").addEventListener("submit", function(event) {
             event.preventDefault();
+            document.getElementById("loadingMessage").style.display = "block";
+
             let name = document.getElementById("name").value.trim();
             let mobile = phoneInput.getNumber();
             let email = document.getElementById("email").value.trim();
             let source = document.getElementById("source").value;
 
-            fetch('https://script.google.com/macros/s/AKfycbyYGh2QYcSRYMOC1_fEvZYbO9OM-Q7lJ1uRxXluWQwvc0BdeZpF7b4nr8dWM1eA_g/exec?action=register', {
+            fetch('https://script.google.com/macros/s/AKfycbz6NaaMwoN9lftVSmLtiR62ABiwXJBCvFBXHNzs3YH10a1BTrmuLg2Y6RSyK6k02Jg/exec', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ name, mobile, email, source })
             })
-            .then(response => response.json())
+            .then(response => response.text())
             .then(data => {
-                if (data.status === "success") {
-                    window.location.href = 'payment.html?email=' + encodeURIComponent(email);
-                } else {
-                    document.getElementById("message").innerText = "Error! Try again.";
-                }
+                window.location.href = 'payment.html?email=' + encodeURIComponent(email);
             })
-            .catch(() => document.getElementById("message").innerText = "Error! Try again.");
+            .catch(error => {
+                document.getElementById("message").innerText = "Error! Try again.";
+                document.getElementById("loadingMessage").style.display = "none";
+            });
         });
     </script>
 </body>
