@@ -1,33 +1,61 @@
+<!-- Updated payment.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment for AI Workshop</title>
+    <title>AI Workshop Payment</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 400px; margin: auto; padding: 20px; }
+        input, button { width: 100%; margin-top: 10px; padding: 10px; }
+        #loading { display: none; text-align: center; }
+    </style>
 </head>
 <body>
-    <h2>Payment Details</h2>
-    <form id="paymentForm">
-        <input type="email" id="email" required>
-        <input type="text" id="upiId" placeholder="Your UPI ID" required>
-        <input type="text" id="transactionId" placeholder="Transaction ID" required>
-        <input type="file" id="paymentProof" required>
-        <button type="submit">Submit Payment</button>
-    </form>
-    <p id="message"></p>
+    <div class="container">
+        <h2>Payment Details</h2>
+        <form id="paymentForm">
+            <input type="email" id="email" placeholder="Email" required readonly>
+            <input type="text" id="upi" placeholder="UPI ID" required>
+            <input type="text" id="transaction" placeholder="Transaction ID" required>
+            <input type="file" id="paymentProof" accept="image/png, image/jpeg" required>
+            <button type="submit">Confirm Payment</button>
+        </form>
+        <div id="loading">Submitting...</div>
+    </div>
 
     <script>
-        document.getElementById("paymentForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            let formData = new FormData(this);
+        $(document).ready(function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get("email");
+            if (email) { $("#email").val(email); }
 
-            fetch('https://script.google.com/macros/s/AKfycby4of9IZuDJ1VPMjrUkCnFcnOKOG0CAUa0G6XcXj13LCHNmm59CG3OeWPgKMWOuZHI/exec?action=payment', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => alert("Payment Submitted! Check Email."))
-            .catch(() => alert("Error! Try again."));
+            $("#paymentForm").submit(function (e) {
+                e.preventDefault();
+                $("#loading").show();
+
+                var formData = new FormData();
+                formData.append("email", $("#email").val());
+                formData.append("upi", $("#upi").val());
+                formData.append("transaction", $("#transaction").val());
+                formData.append("paymentProof", $("#paymentProof")[0].files[0]);
+                
+                fetch("YOUR_GOOGLE_SCRIPT_URL", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(res => res.text())
+                .then(res => {
+                    $("#loading").hide();
+                    if (res.includes("Success")) {
+                        alert("Payment Submitted Successfully!");
+                    } else {
+                        alert("Error! Try again");
+                    }
+                });
+            });
         });
     </script>
 </body>
