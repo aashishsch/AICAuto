@@ -5,51 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment for AI Workshop</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 50%;
+            margin: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #loading {
+            display: none;
+            font-size: 16px;
+            color: #007bff;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Payment for AI Workshop</h2>
-        <img src="qr-code.png" alt="QR Code for Payment">
+        <h2>Complete Your Payment</h2>
+        <p>Scan the QR Code below to make the payment</p>
+        <img src="your_qr_code_image_url_here" alt="QR Code" width="200">
+        
         <form id="paymentForm">
-            <input type="email" id="email" readonly>
-            <input type="text" id="upiId" placeholder="UPI ID Used for Payment" required>
-            <input type="text" id="transactionId" placeholder="UPI Transaction ID" required>
-            <input type="file" id="screenshot" accept="image/png, image/jpeg, image/jpg" required>
+            <input type="text" id="upiId" placeholder="Enter UPI ID Used for Payment" required>
+            <input type="text" id="transactionId" placeholder="Enter UPI Transaction ID" required>
+            <input type="file" id="paymentScreenshot" accept="image/png, image/jpeg" required>
             <button type="submit">Submit Payment</button>
         </form>
+        
+        <p id="loading">Processing your payment, please wait...</p>
         <p id="message"></p>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        document.getElementById("email").value = urlParams.get("email");
-
         document.getElementById("paymentForm").addEventListener("submit", function(event) {
             event.preventDefault();
-            let email = document.getElementById("email").value;
-            let upiId = document.getElementById("upiId").value;
-            let transactionId = document.getElementById("transactionId").value;
-            let screenshot = document.getElementById("screenshot").files[0];
+            
+            let upiId = document.getElementById("upiId").value.trim();
+            let transactionId = document.getElementById("transactionId").value.trim();
+            let paymentScreenshot = document.getElementById("paymentScreenshot").files[0];
+
+            if (!upiId || !transactionId || !paymentScreenshot) {
+                document.getElementById("message").innerText = "Please fill all fields!";
+                return;
+            }
+
+            document.getElementById("loading").style.display = "block";
 
             let formData = new FormData();
-            formData.append("email", email);
             formData.append("upiId", upiId);
             formData.append("transactionId", transactionId);
-            formData.append("screenshot", screenshot);
+            formData.append("paymentScreenshot", paymentScreenshot);
 
-            fetch('https://script.google.com/macros/s/AKfycbz-2CztsUBtyaTSeL65X7x2YDCxUFZ2fXFkpN20q0oRV71kd9OnvIy8WKCTuLlqip4/exec?action=payment', {
+            fetch('https://script.google.com/macros/s/AKfycbyYGh2QYcSRYMOC1_fEvZYbO9OM-Q7lJ1uRxXluWQwvc0BdeZpF7b4nr8dWM1eA_g/exec', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => response.text())
             .then(data => {
-                if (data.status === "success") {
-                    document.getElementById("message").innerText = "Payment submitted successfully!";
-                } else {
-                    document.getElementById("message").innerText = "Error! Try again.";
-                }
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("message").innerText = "Payment Submitted! Check your email for confirmation.";
+                setTimeout(() => {
+                    window.location.href = "success.html";  // Redirect to success page
+                }, 3000);
             })
-            .catch(() => document.getElementById("message").innerText = "Error! Try again.");
+            .catch(error => {
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("message").innerText = "Error! Try again.";
+            });
         });
     </script>
 </body>
