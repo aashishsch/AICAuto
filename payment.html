@@ -3,96 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Confirmation</title>
+    <title>Payment for AI Workshop</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            text-align: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 50%;
-            margin: auto;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <h2>Complete Your Payment</h2>
-        <p>Scan the QR code below to make your payment</p>
-        <img src="your-qr-code-image-url" alt="QR Code" width="200px">
+        <h2>Payment for AI Workshop</h2>
+        <img src="qr-code.png" alt="QR Code for Payment">
         <form id="paymentForm">
-            <input type="email" id="email" placeholder="Enter your registered email" required>
-            <input type="text" id="upiId" placeholder="UPI ID used for payment" required>
-            <input type="text" id="transactionId" placeholder="Transaction ID" required>
-            <input type="file" id="paymentProof" accept="image/png, image/jpeg, image/jpg" required>
+            <input type="email" id="email" readonly>
+            <input type="text" id="upiId" placeholder="UPI ID Used for Payment" required>
+            <input type="text" id="transactionId" placeholder="UPI Transaction ID" required>
+            <input type="file" id="screenshot" accept="image/png, image/jpeg, image/jpg" required>
             <button type="submit">Submit Payment</button>
         </form>
         <p id="message"></p>
     </div>
 
     <script>
-        document.getElementById("paymentForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            let email = document.getElementById("email").value.trim();
-            let upiId = document.getElementById("upiId").value.trim();
-            let transactionId = document.getElementById("transactionId").value.trim();
-            let fileInput = document.getElementById("paymentProof").files[0];
+        const urlParams = new URLSearchParams(window.location.search);
+        document.getElementById("email").value = urlParams.get("email");
 
-            if (!fileInput) {
-                document.getElementById("message").innerText = "Please upload a payment proof image.";
-                return;
-            }
+        document.getElementById("paymentForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let email = document.getElementById("email").value;
+            let upiId = document.getElementById("upiId").value;
+            let transactionId = document.getElementById("transactionId").value;
+            let screenshot = document.getElementById("screenshot").files[0];
 
             let formData = new FormData();
-            formData.append("file", fileInput);
             formData.append("email", email);
             formData.append("upiId", upiId);
             formData.append("transactionId", transactionId);
-            formData.append("action", "payment");
+            formData.append("screenshot", screenshot);
 
-            // Upload the file to Google Apps Script
-            fetch("https://script.google.com/macros/s/AKfycby9bE1QPUN1mhnt8z4YKrkpYk0xJdnOhMuDShfpnDjUO10oEbqe2_GAgLZe8IEmMys/exec", {
-                method: "POST",
+            fetch('https://script.google.com/macros/s/AKfycbz-2CztsUBtyaTSeL65X7x2YDCxUFZ2fXFkpN20q0oRV71kd9OnvIy8WKCTuLlqip4/exec?action=payment', {
+                method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                if (data.trim() === "Success") {
-                    document.getElementById("message").innerText = "Payment submitted! Check your email.";
+                if (data.status === "success") {
+                    document.getElementById("message").innerText = "Payment submitted successfully!";
                 } else {
                     document.getElementById("message").innerText = "Error! Try again.";
                 }
             })
-            .catch(error => {
-                console.error("Error:", error);
-                document.getElementById("message").innerText = "Submission failed! Check your network.";
-            });
+            .catch(() => document.getElementById("message").innerText = "Error! Try again.");
         });
     </script>
 </body>
