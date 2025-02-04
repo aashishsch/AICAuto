@@ -42,7 +42,7 @@
                 formData.append("transaction", $("#transaction").val());
                 formData.append("paymentProof", $("#paymentProof")[0].files[0]);
                 
-                fetch("YOUR_GOOGLE_SCRIPT_URL", {
+                fetch("https://script.google.com/macros/s/AKfycbxbJ3WGHYLEOmuYVX44N9flP0QTfSOpGACIuUuU37rNYLyHtJDtq19sGsUejcgloro/exec", {
                     method: "POST",
                     body: formData
                 })
