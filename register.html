@@ -99,7 +99,7 @@
                 return;
             }
 
-            fetch('https://script.google.com/macros/s/AKfycby9bE1QPUN1mhnt8z4YKrkpYk0xJdnOhMuDShfpnDjUO10oEbqe2_GAgLZe8IEmMys/exec?action=register', { // Replace with Google Apps Script URL
+            fetch('https://script.google.com/macros/s/AKfycby9bE1QPUN1mhnt8z4YKrkpYk0xJdnOhMuDShfpnDjUO10oEbqe2_GAgLZe8IEmMys/exec', { // Replace with Google Apps Script URL
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ action: "register", name, mobile, email, source })
