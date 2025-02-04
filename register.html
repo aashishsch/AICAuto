@@ -6,41 +6,6 @@
     <title>Register for AI Workshop</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            text-align: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 50%;
-            margin: auto;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -68,13 +33,7 @@
             geoIpLookup: function(callback) {
                 fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with your actual token
                     .then((response) => response.json())
-                    .then((data) => {
-                        if (data && data.country) {
-                            callback(data.country);
-                        } else {
-                            callback("us"); // Default to US if location detection fails
-                        }
-                    })
+                    .then((data) => callback(data.country))
                     .catch(() => callback("us"));
             },
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
@@ -86,36 +45,21 @@
             let mobile = phoneInput.getNumber();
             let email = document.getElementById("email").value.trim();
             let source = document.getElementById("source").value;
-            let messageBox = document.getElementById("message");
 
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email) || email.includes("+") || /[^a-zA-Z0-9.@_-]/.test(email)) {
-                messageBox.innerText = "Invalid email format!";
-                return;
-            }
-
-            if (!name || !mobile || !email || !source) {
-                messageBox.innerText = "Please fill all fields!";
-                return;
-            }
-
-            fetch('https://script.google.com/macros/s/AKfycby9bE1QPUN1mhnt8z4YKrkpYk0xJdnOhMuDShfpnDjUO10oEbqe2_GAgLZe8IEmMys/exec', { // Replace with Google Apps Script URL
+            fetch('https://script.google.com/macros/s/AKfycbz-2CztsUBtyaTSeL65X7x2YDCxUFZ2fXFkpN20q0oRV71kd9OnvIy8WKCTuLlqip4/exec?action=register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action: "register", name, mobile, email, source })
+                body: new URLSearchParams({ name, mobile, email, source })
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                if (data.trim() === "Success") {
+                if (data.status === "success") {
                     window.location.href = 'payment.html?email=' + encodeURIComponent(email);
                 } else {
-                    messageBox.innerText = "Error! Try again.";
+                    document.getElementById("message").innerText = "Error! Try again.";
                 }
             })
-            .catch(error => {
-                console.error("Error:", error);
-                messageBox.innerText = "Submission failed! Check your network.";
-            });
+            .catch(() => document.getElementById("message").innerText = "Error! Try again.");
         });
     </script>
 </body>
