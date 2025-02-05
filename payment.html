@@ -1,60 +1,54 @@
-<!-- Updated payment.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Workshop Payment</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .container { max-width: 400px; margin: auto; padding: 20px; }
-        input, button { width: 100%; margin-top: 10px; padding: 10px; }
-        #loading { display: none; text-align: center; }
-    </style>
+    <title>Payment Details</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <h2>Payment Details</h2>
         <form id="paymentForm">
-            <input type="email" id="email" placeholder="Email" required readonly>
-            <input type="text" id="upi" placeholder="UPI ID" required>
-            <input type="text" id="transaction" placeholder="Transaction ID" required>
-            <input type="file" id="paymentProof" accept="image/png, image/jpeg" required>
-            <button type="submit">Confirm Payment</button>
+            <input type="email" id="email" readonly>
+            <input type="text" id="upi_id" placeholder="UPI ID" required>
+            <input type="text" id="transaction_id" placeholder="Transaction ID" required>
+            <input type="file" id="payment_proof" accept="image/*" required>
+            <button type="submit">Submit</button>
+            <p class="loading">Processing... Please wait.</p>
         </form>
-        <div id="loading">Submitting...</div>
+        <p id="message"></p>
     </div>
 
     <script>
-        $(document).ready(function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const email = urlParams.get("email");
-            if (email) { $("#email").val(email); }
+        document.getElementById("email").value = new URLSearchParams(window.location.search).get("email");
 
-            $("#paymentForm").submit(function (e) {
-                e.preventDefault();
-                $("#loading").show();
+        document.getElementById("paymentForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            document.querySelector(".loading").style.display = "block";
 
-                var formData = new FormData();
-                formData.append("email", $("#email").val());
-                formData.append("upi", $("#upi").val());
-                formData.append("transaction", $("#transaction").val());
-                formData.append("paymentProof", $("#paymentProof")[0].files[0]);
-                
-                fetch("https://script.google.com/macros/s/AKfycbxbJ3WGHYLEOmuYVX44N9flP0QTfSOpGACIuUuU37rNYLyHtJDtq19sGsUejcgloro/exec", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(res => res.text())
-                .then(res => {
-                    $("#loading").hide();
-                    if (res.includes("Success")) {
-                        alert("Payment Submitted Successfully!");
-                    } else {
-                        alert("Error! Try again");
-                    }
-                });
+            let email = document.getElementById("email").value;
+            let upi_id = document.getElementById("upi_id").value.trim();
+            let transaction_id = document.getElementById("transaction_id").value.trim();
+            let payment_proof = document.getElementById("payment_proof").files[0];
+
+            let formData = new FormData();
+            formData.append("email", email);
+            formData.append("upi_id", upi_id);
+            formData.append("transaction_id", transaction_id);
+            formData.append("payment_proof", payment_proof);
+
+            fetch('https://script.google.com/macros/s/AKfycbws3L2K5uxFX3jjlbo167BFqQVBEBscdrQAwo9nAy-X_i_tMpzJnfq60g6ZWJMRzeA/exec', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                alert("Payment submitted successfully!");
+            })
+            .catch(() => {
+                document.getElementById("message").innerText = "Error! Try again.";
+                document.querySelector(".loading").style.display = "none";
             });
         });
     </script>
