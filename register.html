@@ -4,14 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register for AI Workshop</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 10px; width: 50%; margin: auto; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
-        button { background-color: #007bff; color: white; border: none; padding: 15px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; }
-        button:hover { background-color: #0056b3; }
-        .loading { display: none; font-size: 18px; font-weight: bold; color: #007bff; margin-top: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 50%;
+            margin: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            display: none;
+            font-size: 18px;
+            color: #007bff;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -28,9 +62,9 @@
                 <option value="Other">Other</option>
             </select>
             <button type="submit">Submit</button>
+            <p class="loading">Processing... Please wait.</p>
         </form>
         <p id="message"></p>
-        <p class="loading" id="loadingMessage">Processing... Please wait.</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
@@ -39,9 +73,9 @@
         const phoneInput = window.intlTelInput(phoneInputField, {
             initialCountry: "auto",
             geoIpLookup: function(callback) {
-                fetch("https://ipinfo.io/json?token=00585f354cc926") 
-                    .then(response => response.json())
-                    .then(data => callback(data?.country || "us"))
+                fetch("https://ipinfo.io/json?token=00585f354cc926")
+                    .then((response) => response.json())
+                    .then((data) => callback(data.country))
                     .catch(() => callback("us"));
             },
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
@@ -49,25 +83,25 @@
 
         document.getElementById("registrationForm").addEventListener("submit", function(event) {
             event.preventDefault();
-            document.getElementById("loadingMessage").style.display = "block";
+            document.querySelector(".loading").style.display = "block";
 
             let name = document.getElementById("name").value.trim();
             let mobile = phoneInput.getNumber();
             let email = document.getElementById("email").value.trim();
             let source = document.getElementById("source").value;
 
-            fetch('https://script.google.com/macros/s/AKfycby4of9IZuDJ1VPMjrUkCnFcnOKOG0CAUa0G6XcXj13LCHNmm59CG3OeWPgKMWOuZHI/exec?action=register', {
+            fetch('https://script.google.com/macros/s/AKfycbws3L2K5uxFX3jjlbo167BFqQVBEBscdrQAwo9nAy-X_i_tMpzJnfq60g6ZWJMRzeA/exec', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ name, mobile, email, source })
             })
             .then(response => response.text())
-            .then(data => {
+            .then(() => {
                 window.location.href = 'payment.html?email=' + encodeURIComponent(email);
             })
             .catch(() => {
                 document.getElementById("message").innerText = "Error! Try again.";
-                document.getElementById("loadingMessage").style.display = "none";
+                document.querySelector(".loading").style.display = "none";
             });
         });
     </script>
