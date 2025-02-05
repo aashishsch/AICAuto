@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Workshop Registration</title>
+    <title>Register for AI Workshop</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css">
     <style>
         body {
@@ -39,28 +40,39 @@
         button:hover {
             background-color: #0056b3;
         }
-        #message {
-            font-weight: bold;
-            color: green;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Register for AI Workshop</h2>
-        <form id="registrationForm" enctype="multipart/form-data">
+        <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO/main/qr-code.png" alt="Payment QR Code" width="200">
+
+        <form id="registrationForm">
             <input type="text" id="name" placeholder="Full Name" required>
-            <input type="email" id="email" placeholder="Email" required>
             <input type="tel" id="mobile" placeholder="Mobile Number" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <select id="source">
+                <option value="">How did you hear about us?</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Friend">Friend</option>
+                <option value="Other">Other</option>
+            </select>
+            
+            <!-- Payment Details -->
             <input type="text" id="upi_id" placeholder="UPI ID Used for Payment" required>
-            <input type="text" id="transaction_id" placeholder="UPI Transaction ID" required>
-            
+            <input type="text" id="transaction_id" placeholder="Transaction ID" required>
+
             <!-- File Upload -->
-            <input type="file" id="paymentProof" accept="image/png, image/jpeg, image/jpg" required>
-            
+            <label>Upload Payment Screenshot (JPG/PNG Only):</label>
+            <input type="file" id="fileInput" accept="image/png, image/jpeg">
+            <button type="button" id="uploadBtn">Upload Now</button>
+            <p id="uploadStatus"></p>
+
             <button type="submit">Submit</button>
         </form>
-
         <p id="message"></p>
     </div>
 
@@ -70,41 +82,68 @@
         const phoneInput = window.intlTelInput(phoneInputField, {
             initialCountry: "auto",
             geoIpLookup: function(callback) {
-                fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with your actual token
-                    .then((response) => response.json())
-                    .then((data) => {
-                        if (data && data.country) {
-                            callback(data.country);
-                        } else {
-                            callback("us"); // Default to US if location detection fails
-                        }
-                    })
+                fetch("https://ipinfo.io/json?token=00585f354cc926") 
+                    .then(response => response.json())
+                    .then(data => callback(data.country))
                     .catch(() => callback("us"));
             },
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
         });
 
-        document.getElementById("registrationForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
+        let uploadedFileURL = "";
 
-            let formData = new FormData();
-            formData.append("name", document.getElementById("name").value);
-            formData.append("email", document.getElementById("email").value);
-            formData.append("mobile", phoneInput.getNumber());
-            formData.append("upi_id", document.getElementById("upi_id").value);
-            formData.append("transaction_id", document.getElementById("transaction_id").value);
-            formData.append("paymentProof", document.getElementById("paymentProof").files[0]); // File Upload
+        document.getElementById("uploadBtn").addEventListener("click", function () {
+            const fileInput = document.getElementById("fileInput").files[0];
+            if (!fileInput) {
+                document.getElementById("uploadStatus").innerText = "Please select a file first!";
+                return;
+            }
 
-            // Show animation message
-            document.getElementById("message").innerText = "Uploading, please wait...";
+            const formData = new FormData();
+            formData.append("file", fileInput);
 
-            let response = await fetch("https://script.google.com/macros/s/AKfycby6dlFK8th4nbPsigHI26nj8stbAUtEe0O4izZL_DRpz-zb2qH9r3Hgg3ol67zdD0U/exec", {
+            fetch('https://script.google.com/macros/s/AKfycbzhQG-0fuZ-cW9pibFluP5Jjmsr5VokI626DnZZj1tlJS30lmA4oZ-Pbn1UEvz5XNk/exec', {
                 method: "POST",
                 body: formData
-            });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.url) {
+                    uploadedFileURL = data.url;
+                    document.getElementById("uploadStatus").innerText = "Upload Successful!";
+                } else {
+                    document.getElementById("uploadStatus").innerText = "Upload Failed!";
+                }
+            })
+            .catch(() => document.getElementById("uploadStatus").innerText = "Error Uploading!");
+        });
 
-            let result = await response.text();
-            document.getElementById("message").innerText = result;
+        document.getElementById("registrationForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            document.getElementById("message").innerText = "Processing your request, please wait...";
+            
+            let name = document.getElementById("name").value.trim();
+            let mobile = phoneInput.getNumber();
+            let email = document.getElementById("email").value.trim();
+            let source = document.getElementById("source").value;
+            let upi_id = document.getElementById("upi_id").value.trim();
+            let transaction_id = document.getElementById("transaction_id").value.trim();
+
+            if (!uploadedFileURL) {
+                document.getElementById("message").innerText = "Please upload the payment screenshot before submitting!";
+                return;
+            }
+
+            fetch('https://script.google.com/macros/s/AKfycbzhQG-0fuZ-cW9pibFluP5Jjmsr5VokI626DnZZj1tlJS30lmA4oZ-Pbn1UEvz5XNk/exec', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ name, mobile, email, source, upi_id, transaction_id, fileURL: uploadedFileURL })
+            })
+            .then(response => response.text())
+            .then(() => {
+                window.location.href = "thankyou.html";
+            })
+            .catch(() => document.getElementById("message").innerText = "Error! Try again.");
         });
     </script>
 </body>
