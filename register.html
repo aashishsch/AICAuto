@@ -39,37 +39,29 @@
         button:hover {
             background-color: #0056b3;
         }
-        .hidden {
-            display: none;
+        #message {
+            font-weight: bold;
+            color: green;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>AI Workshop Registration</h2>
-        <form id="registrationForm">
+        <h2>Register for AI Workshop</h2>
+        <form id="registrationForm" enctype="multipart/form-data">
             <input type="text" id="name" placeholder="Full Name" required>
-            <input type="tel" id="mobile" placeholder="Mobile Number" required>
             <input type="email" id="email" placeholder="Email" required>
-            <select id="source">
-                <option value="">How did you hear about us?</option>
-                <option value="Social Media">Social Media</option>
-                <option value="Friend">Friend</option>
-                <option value="Other">Other</option>
-            </select>
-
-            <h3>Payment Details</h3>
-            <img src="your-qr-code-image-url" alt="Scan QR Code to Pay" width="200">
+            <input type="tel" id="mobile" placeholder="Mobile Number" required>
             <input type="text" id="upi_id" placeholder="UPI ID Used for Payment" required>
             <input type="text" id="transaction_id" placeholder="UPI Transaction ID" required>
-            <input type="file" id="payment_screenshot" accept="image/png, image/jpeg, image/jpg" required>
-
+            
+            <!-- File Upload -->
+            <input type="file" id="paymentProof" accept="image/png, image/jpeg, image/jpg" required>
+            
             <button type="submit">Submit</button>
-            <p id="message"></p>
         </form>
-        <div id="loading" class="hidden">
-            <p>Please wait... Processing your registration.</p>
-        </div>
+
+        <p id="message"></p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
@@ -78,60 +70,41 @@
         const phoneInput = window.intlTelInput(phoneInputField, {
             initialCountry: "auto",
             geoIpLookup: function(callback) {
-                fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with actual API token
+                fetch("https://ipinfo.io/json?token=00585f354cc926") // Replace with your actual token
                     .then((response) => response.json())
-                    .then((data) => callback(data.country))
+                    .then((data) => {
+                        if (data && data.country) {
+                            callback(data.country);
+                        } else {
+                            callback("us"); // Default to US if location detection fails
+                        }
+                    })
                     .catch(() => callback("us"));
             },
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
         });
 
-        document.getElementById("registrationForm").addEventListener("submit", function(event) {
+        document.getElementById("registrationForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            
-            document.getElementById("loading").classList.remove("hidden"); // Show loading message
-            
-            let name = document.getElementById("name").value.trim();
-            let mobile = phoneInput.getNumber();
-            let email = document.getElementById("email").value.trim();
-            let source = document.getElementById("source").value;
-            let upi_id = document.getElementById("upi_id").value.trim();
-            let transaction_id = document.getElementById("transaction_id").value.trim();
-            let payment_screenshot = document.getElementById("payment_screenshot").files[0];
-
-            // Email validation
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email) || email.includes("+") || /[^a-zA-Z0-9.@_-]/.test(email)) {
-                document.getElementById("message").innerText = "Invalid email format!";
-                return;
-            }
-
-            if (!name || !mobile || !email || !source || !upi_id || !transaction_id || !payment_screenshot) {
-                document.getElementById("message").innerText = "Please fill all fields!";
-                return;
-            }
 
             let formData = new FormData();
-            formData.append("name", name);
-            formData.append("mobile", mobile);
-            formData.append("email", email);
-            formData.append("source", source);
-            formData.append("upi_id", upi_id);
-            formData.append("transaction_id", transaction_id);
-            formData.append("payment_screenshot", payment_screenshot);
+            formData.append("name", document.getElementById("name").value);
+            formData.append("email", document.getElementById("email").value);
+            formData.append("mobile", phoneInput.getNumber());
+            formData.append("upi_id", document.getElementById("upi_id").value);
+            formData.append("transaction_id", document.getElementById("transaction_id").value);
+            formData.append("paymentProof", document.getElementById("paymentProof").files[0]); // File Upload
 
-            fetch('https://script.google.com/macros/s/AKfycbxj7Lei81URx4pT2f2an8KMwLSTrkmweGiOgSMMgeP1R6YPSRxA1AYaULWs5gS3y_A/exec', {
-                method: 'POST',
+            // Show animation message
+            document.getElementById("message").innerText = "Uploading, please wait...";
+
+            let response = await fetch("https://script.google.com/macros/s/AKfycby6dlFK8th4nbPsigHI26nj8stbAUtEe0O4izZL_DRpz-zb2qH9r3Hgg3ol67zdD0U/exec", {
+                method: "POST",
                 body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("loading").classList.add("hidden"); // Hide loading message
-                document.getElementById("message").innerText = "Registration Successful! Check your email.";
-            })
-            .catch(error => {
-                document.getElementById("message").innerText = "Error! Try again.";
             });
+
+            let result = await response.text();
+            document.getElementById("message").innerText = result;
         });
     </script>
 </body>
