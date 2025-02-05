@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register for AI Workshop</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,6 +42,16 @@
         .hidden {
             display: none;
         }
+        #loading {
+            display: none;
+            font-size: 18px;
+            color: #007bff;
+            margin-top: 10px;
+        }
+        #qrCode {
+            width: 200px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -50,13 +59,21 @@
         <h2>Register for AI Workshop</h2>
         <form id="registrationForm">
             <input type="text" id="name" placeholder="Full Name" required>
-            <input type="email" id="email" placeholder="Email" required>
             <input type="tel" id="mobile" placeholder="Mobile Number" required>
-            <input type="text" id="upi_id" placeholder="UPI ID Used for Payment" required>
-            <input type="text" id="transaction_id" placeholder="UPI Transaction ID" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <select id="source">
+                <option value="">How did you hear about us?</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Friend">Friend</option>
+                <option value="Other">Other</option>
+            </select>
 
-            <!-- QR Code Image -->
-            <img src="YOUR_GITHUB_QR_IMAGE_URL" alt="Payment QR Code" style="width:200px; display:block; margin:auto;">
+            <!-- QR Code for Payment -->
+            <h3>Make Payment</h3>
+            <img id="qrCode" src="https://yourgithubrepo.com/qr-code.png" alt="QR Code">
+
+            <input type="text" id="upi_id" placeholder="UPI ID Used for Payment" required>
+            <input type="text" id="transaction_id" placeholder="Transaction ID" required>
 
             <!-- File Upload -->
             <input type="file" id="paymentProof" accept="image/*" required>
@@ -64,15 +81,27 @@
             <p id="uploadMessage"></p>
 
             <button type="submit">Submit</button>
+            <p id="loading">Processing your request, please wait...</p>
         </form>
         <p id="message"></p>
-        <p id="loading" class="hidden">Processing your request, please wait...</p>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script>
-        let fileURL = ""; // Will store the uploaded file's URL
+        const phoneInputField = document.getElementById("mobile");
+        const phoneInput = window.intlTelInput(phoneInputField, {
+            initialCountry: "auto",
+            geoIpLookup: function(callback) {
+                fetch("https://ipinfo.io/json?token=00585f354cc926")
+                    .then(response => response.json())
+                    .then(data => callback(data.country))
+                    .catch(() => callback("us"));
+            },
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+        });
 
-        // Handle file upload
+        let fileURL = "";
+
         document.getElementById("uploadBtn").addEventListener("click", function() {
             let fileInput = document.getElementById("paymentProof").files[0];
             if (!fileInput) {
@@ -80,57 +109,56 @@
                 return;
             }
 
-            let formData = new FormData();
-            formData.append("file", fileInput);
+            let reader = new FileReader();
+            reader.readAsDataURL(fileInput);
+            reader.onload = function() {
+                let base64String = reader.result.split(',')[1];
 
-            fetch("https://script.google.com/macros/s/AKfycbyQy3OfaZeE0P4UPmcb1bpz0ICKDC4Na6Gx_zUc_80folCnI-xPr6rZ8dyfApUKbK0/exec", { // Web App URL of Google Apps Script
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.text())
-            .then(url => {
-                if (url.includes("https://")) {
-                    fileURL = url; // Store uploaded file URL
-                    document.getElementById("uploadMessage").innerText = "Upload Successful!";
-                } else {
-                    document.getElementById("uploadMessage").innerText = "Upload Failed. Try again.";
-                }
-            })
-            .catch(error => {
-                document.getElementById("uploadMessage").innerText = "Error uploading file!";
-            });
+                fetch("https://script.google.com/macros/s/AKfycbyQy3OfaZeE0P4UPmcb1bpz0ICKDC4Na6Gx_zUc_80folCnI-xPr6rZ8dyfApUKbK0/exec", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ file: base64String })
+                })
+                .then(response => response.text())
+                .then(url => {
+                    if (url.includes("https://")) {
+                        fileURL = url;
+                        document.getElementById("uploadMessage").innerText = "Upload Successful!";
+                    } else {
+                        document.getElementById("uploadMessage").innerText = "Upload Failed. Try again.";
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("uploadMessage").innerText = "Error uploading file!";
+                });
+            };
         });
 
-        // Handle form submission
         document.getElementById("registrationForm").addEventListener("submit", function(event) {
             event.preventDefault();
-            document.getElementById("loading").classList.remove("hidden"); // Show animation
+            document.getElementById("loading").style.display = "block";
 
             let name = document.getElementById("name").value.trim();
+            let mobile = phoneInput.getNumber();
             let email = document.getElementById("email").value.trim();
-            let mobile = document.getElementById("mobile").value.trim();
+            let source = document.getElementById("source").value;
             let upi_id = document.getElementById("upi_id").value.trim();
             let transaction_id = document.getElementById("transaction_id").value.trim();
 
-            // Ensure file is uploaded before submission
-            if (!fileURL) {
-                document.getElementById("message").innerText = "Please upload the payment screenshot before submitting.";
-                document.getElementById("loading").classList.add("hidden");
-                return;
-            }
-
-            fetch("https://script.google.com/macros/s/AKfycbyQy3OfaZeE0P4UPmcb1bpz0ICKDC4Na6Gx_zUc_80folCnI-xPr6rZ8dyfApUKbK0/exec", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({ name, email, mobile, upi_id, transaction_id, fileURL })
+            fetch('https://script.google.com/macros/s/AKfycbyQy3OfaZeE0P4UPmcb1bpz0ICKDC4Na6Gx_zUc_80folCnI-xPr6rZ8dyfApUKbK0/exec', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 
+                    name, mobile, email, source, upi_id, transaction_id, fileURL 
+                })
             })
             .then(response => response.text())
-            .then(() => {
-                window.location.href = "thankyou.html"; // Redirect after submission
+            .then(data => {
+                document.getElementById("loading").style.display = "none";
+                window.location.href = 'thankyou.html';
             })
-            .catch(() => {
+            .catch(error => {
                 document.getElementById("message").innerText = "Error! Try again.";
-                document.getElementById("loading").classList.add("hidden");
             });
         });
     </script>
